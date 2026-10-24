@@ -28,6 +28,11 @@ describe("flight unit USB log", () => {
     expect(p.sample.battMv).toBeNull(); // 4576 mV is not a real 1S reading
   });
 
+  it("shows a fix from older firmware (no flags) as PAD, not PAD-NOFIX", () => {
+    const p = parseLine("#302 st=0 fix=1 sats=13 38.8850123,-77.7745456 alt=46 agl_max=0 batt=4576 gps_chars=44645 bad=0");
+    expect(p.kind === "sample" && p.sample.state).toBe("PAD");
+  });
+
   it("uses flags for the state when present", () => {
     const p = parseLine("#40 st=0 fix=1 sats=12 38.8850000,-77.7745000 alt=120 agl_max=0 batt=4100 gps_chars=9000 bad=0 flags=07");
     expect(p.kind === "sample" && p.sample.state).toBe("PAD-READY");

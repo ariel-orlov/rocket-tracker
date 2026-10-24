@@ -1,4 +1,4 @@
-export type FlightState = "PAD-NOFIX" | "PAD-READY" | "FLIGHT" | "LANDED";
+export type FlightState = "PAD-NOFIX" | "PAD" | "PAD-READY" | "FLIGHT" | "LANDED";
 
 /** One position packet, from either the flight unit's USB log or the ground station's CSV. */
 export interface Sample {

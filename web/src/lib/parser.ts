@@ -49,8 +49,9 @@ export function parseLine(raw: string): Parsed {
     const st = Number(m[2]);
     const fresh = m[3] === "1";
     const flags = m[12] !== undefined ? parseInt(m[12], 16) : null;
+    // Older firmware has no flags, so pad readiness is unknown; a fresh fix still counts as a fix.
     const state: FlightState =
-      flags !== null ? stateFromFlags(flags) : st === 2 ? "LANDED" : st === 1 ? "FLIGHT" : "PAD-NOFIX";
+      flags !== null ? stateFromFlags(flags) : st === 2 ? "LANDED" : st === 1 ? "FLIGHT" : fresh ? "PAD" : "PAD-NOFIX";
     const hasFix = flags !== null ? (flags & FLAG.FIX) !== 0 : fresh;
     const [lat, lon] = posOrNull(Number(m[5]), Number(m[6]), hasFix);
     return {

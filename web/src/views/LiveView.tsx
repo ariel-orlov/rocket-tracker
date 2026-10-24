@@ -80,6 +80,13 @@ export function LiveView() {
   const linkOk = linkAge !== null && linkAge < 5000;
   const fixAge = lastFix ? now - lastFix.t : null;
 
+  // The flight unit reports how many characters it has received from the GPS. If that count
+  // stops moving, the GPS isn't connected or powered: no amount of sky will give a fix.
+  const gpsSilent = useMemo(() => {
+    const recent = samples.filter((s) => s.src === "flight" && s.gpsChars !== undefined).slice(-6);
+    return recent.length >= 6 && recent[recent.length - 1].gpsChars === recent[0].gpsChars;
+  }, [samples]);
+
   const useLaptopLocation = () => {
     setGeoErr(null);
     if (!navigator.geolocation) return setGeoErr("This browser has no location access.");
@@ -96,6 +103,16 @@ export function LiveView() {
     <div className="live">
       <MapPanel />
       <aside className="side" aria-label="Rocket status">
+        {gpsSilent && (
+          <div className="alert" role="alert">
+            <strong>The GPS isn't sending any data</strong>
+            <span className="small">
+              This isn't a sky or signal problem. The board has received nothing from the GPS module for 6 seconds, so it's not
+              connected or not powered. Check that the GPS board is seated firmly on the pins (or soldered), the right way round,
+              with USB unplugged while you move it.
+            </span>
+          </div>
+        )}
         {!latest && !lastFix && (
           <div className="empty">
             <p><strong>No data yet.</strong></p>
