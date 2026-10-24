@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.pio/
+web/dev-dist/
+web/public/firmware/
+.DS_Store
+*.log
+PLAN.md
