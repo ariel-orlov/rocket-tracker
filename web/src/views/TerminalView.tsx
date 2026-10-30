@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { setState, useApp } from "../lib/store";
+import { sendLine } from "../lib/link";
 import { exportLog } from "../lib/export";
 import type { LineKind } from "../lib/types";
 
@@ -15,7 +16,17 @@ export function TerminalView() {
   const [filter, setFilter] = useState("");
   const [kind, setKind] = useState<"all" | "status" | LineKind>("all");
   const [follow, setFollow] = useState(true);
+  const [cmd, setCmd] = useState("");
   const box = useRef<HTMLDivElement>(null);
+  const conn = useApp((s) => s.conn);
+  const device = useApp((s) => s.device);
+  const connected = conn === "usb" || conn === "ble";
+  const quick = device === "flight" ? ["INFO", "BEEP", "BUZZ 5", "BUZZ 0", "MODE COMP", "LANDBEEP ON"] : ["INFO", "BUZZ 30", "BUZZ 0", "CANCEL"];
+  const send = (line: string) => {
+    if (!line.trim()) return;
+    void sendLine(line.trim().toUpperCase());
+    setCmd("");
+  };
 
   const shown = useMemo(() => {
     const f = filter.trim().toLowerCase();
@@ -47,6 +58,7 @@ export function TerminalView() {
           <option value="packet">Packets only</option>
           <option value="status">Messages only</option>
           <option value="error">Errors only</option>
+          <option value="cmd">Commands only</option>
         </select>
         <button className="btn small" aria-pressed={follow} onClick={() => setFollow((f) => !f)}>
           {follow ? "Auto-scroll on" : "Auto-scroll paused"}
@@ -57,7 +69,7 @@ export function TerminalView() {
       </div>
       <div className="screen" ref={box} role="log" aria-live="off">
         {shown.length === 0 ? (
-          <div className="ln info"><span className="ts">—</span><span>Raw output from the board shows up here once you connect over USB or start the simulator.</span></div>
+          <div className="ln info"><span className="ts">—</span><span>Raw output from the board shows up here once you connect over USB or connect the ground station.</span></div>
         ) : (
           shown.map((l) => (
             <div key={l.id} className={`ln ${l.kind}`}>
@@ -67,6 +79,12 @@ export function TerminalView() {
           ))
         )}
       </div>
+      <form className="cmdbar" onSubmit={(e) => { e.preventDefault(); send(cmd); }}>
+        <input id="term-cmd" className="mono" placeholder={connected ? "Command, e.g. INFO" : "Connect a board to send commands"} value={cmd}
+          onChange={(e) => setCmd(e.target.value)} disabled={!connected} aria-label="Command to send" autoComplete="off" />
+        <button className="btn small primary" disabled={!connected || !cmd.trim()}>Send</button>
+        {quick.map((q) => <button type="button" key={q} className="btn small mono" disabled={!connected} onClick={() => send(q)}>{q}</button>)}
+      </form>
     </div>
   );
 }

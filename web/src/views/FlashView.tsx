@@ -80,6 +80,18 @@ export function FlashView() {
       {target.id === "flight" && (
         <div className="note">Full power (22 dBm, ~160 mW). For the bench, use the bench build.</div>
       )}
+      {target.id !== "ground" && (
+        <div className="note info">
+          The flight unit keeps its settings through a reflash. A board that never had them starts in <strong>competition mode</strong>
+          (transmit-only) with <strong>beep after landing on</strong>. Change them on the Live tab with the flight unit plugged in.
+        </div>
+      )}
+      {target.id === "ground" && (
+        <div className="note info">
+          Flash the ground station and the flight unit from the same version of the app: firmware 3 packets have a settings byte that
+          older ground stations reject.
+        </div>
+      )}
 
       <div className="checks">
         <h3>Before you flash</h3>

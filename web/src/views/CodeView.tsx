@@ -92,11 +92,22 @@ export function CodeView() {
                   <tr><td>Coding rate</td><td className="mono">4/5</td><td>Standard</td></tr>
                   <tr><td>Power</td><td className="mono">22 dBm / 2 dBm</td><td>Flight build / bench build</td></tr>
                   <tr><td>Sync word</td><td className="mono">0x12</td><td>Private network</td></tr>
-                  <tr><td>Rate</td><td className="mono">1 / s, 1 per 3 s landed</td><td>Transmit only: the rocket never listens</td></tr>
+                  <tr><td>Rate</td><td className="mono">1 / s, 1 per 3 s landed</td><td>In competition mode the rocket never listens</td></tr>
                 </tbody>
               </table>
             </div>
-            <h3>22-byte packet (little-endian)</h3>
+            <h3>Modes</h3>
+            <div className="tablewrap">
+              <table>
+                <thead><tr><th>Mode</th><th>Radio</th><th>Use for</th></tr></thead>
+                <tbody>
+                  <tr><td>Competition (default)</td><td>Transmit-only. The receive interrupt isn't even attached.</td><td>Competition flights, where radio signals to the rocket after liftoff are banned</td></tr>
+                  <tr><td>Non-competition</td><td>Listens 400 ms after each packet for a ground command</td><td>Club and test launches: remote buzzer</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="small muted">Set over USB with <code>MODE COMP</code> / <code>MODE NONCOMP</code>; saved on the board. <code>LANDBEEP ON|OFF</code> works in both modes.</p>
+            <h3>23-byte packet (little-endian)</h3>
             <div className="tablewrap">
               <table>
                 <thead><tr><th>Bytes</th><th>Field</th><th>Notes</th></tr></thead>
@@ -111,18 +122,45 @@ export function CodeView() {
                   <tr><td className="mono">16–17</td><td>fix age, 0.1 s</td><td></td></tr>
                   <tr><td className="mono">18–19</td><td>battery, mV</td><td></td></tr>
                   <tr><td className="mono">20–21</td><td>max height above pad, m</td><td>GPS estimate. The scoring altimeter is the only official altitude.</td></tr>
+                  <tr><td className="mono">22</td><td>cfg</td><td>01 non-competition · 02 beep after landing · 04 buzzing · 08 pad chirps muted. Firmware 2 sent 22 bytes without it.</td></tr>
                 </tbody>
               </table>
             </div>
-            <h3>What the boards print over USB</h3>
+            <h3>Ground-to-rocket command (non-competition only, 4 bytes)</h3>
+            <div className="tablewrap">
+              <table>
+                <thead><tr><th>Byte</th><th>Field</th><th>Notes</th></tr></thead>
+                <tbody>
+                  <tr><td className="mono">0</td><td>magic = 0xC3</td><td></td></tr>
+                  <tr><td className="mono">1</td><td>team ID</td><td></td></tr>
+                  <tr><td className="mono">2</td><td>command</td><td>1 buzz · 2 beep after landing · 3 mute pad chirps</td></tr>
+                  <tr><td className="mono">3</td><td>argument</td><td>Buzz: seconds, 0 = stop. Others: 0/1</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="small muted">The ground station sends it 25 ms after a packet, up to 6 times, until the rocket's cfg byte shows the change.</p>
+            <h3>What the boards print</h3>
             <div className="tablewrap">
               <table>
                 <thead><tr><th>Board</th><th>Line</th></tr></thead>
                 <tbody>
-                  <tr><td>Flight unit</td><td className="mono small">#12 st=0 fix=1 sats=9 LAT,LON alt=120 agl_max=0 batt=4100 gps_chars=1035 bad=0 flags=07</td></tr>
-                  <tr><td>Ground station</td><td className="mono small">seq,state,lat,lon,alt_m,sats,fresh,batt_mV,maxAgl_m,rssi,snr,maps</td></tr>
-                  <tr><td>Ground station</td><td className="mono small">ME,LAT,LON,alt_m,sats (its own position, every 2 s)</td></tr>
+                  <tr><td>Flight unit</td><td className="mono small">#12 st=0 fix=1 sats=9 LAT,LON alt=120 agl_max=0 batt=4100 gps_chars=1035 bad=0 flags=07 cfg=02</td></tr>
+                  <tr><td>Flight unit</td><td className="mono small">FU,fw=3,team=2A,power=22,mode=COMP,landbeep=1,quiet=0,radio=ok</td></tr>
+                  <tr><td>Ground station</td><td className="mono small">seq,state,lat,lon,alt_m,sats,fresh,batt_mV,maxAgl_m,rssi,snr,flags,cfg,age_s,maps</td></tr>
+                  <tr><td>Ground station</td><td className="mono small">ME,LAT,LON,alt_m,sats,course_deg,speed_mps,hdop (its own position, every 2 s)</td></tr>
+                  <tr><td>Ground station</td><td className="mono small">STAT,rx=…,crc=…,other=…,up=…,ble=0|1 (every 5 s)</td></tr>
+                  <tr><td>Ground station</td><td className="mono small">ACK,BUZZ,30,queued → CMD,sent,BUZZ,30,try=1 → CMD,done|refused|failed,BUZZ,30</td></tr>
                   <tr><td>Both</td><td className="mono small">radio OK · radio.begin failed: -2</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>Commands (USB, or Bluetooth to the ground station)</h3>
+            <div className="tablewrap">
+              <table>
+                <thead><tr><th>Board</th><th>Commands</th></tr></thead>
+                <tbody>
+                  <tr><td>Flight unit</td><td className="mono small">INFO · MODE COMP|NONCOMP · LANDBEEP ON|OFF · QUIET ON|OFF · BUZZ &lt;s&gt; · BEEP</td></tr>
+                  <tr><td>Ground station</td><td className="mono small">INFO · BUZZ &lt;s&gt; · LANDBEEP ON|OFF · QUIET ON|OFF · CANCEL · FORGET</td></tr>
                 </tbody>
               </table>
             </div>

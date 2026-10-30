@@ -41,7 +41,7 @@ export const SettingsDialog = forwardRef<HTMLDialogElement>(function SettingsDia
         </div>
 
         <div className="field">
-          <span>Launch site (map start point and simulator location)</span>
+          <span>Launch site (where the map opens)</span>
           <input id="site-name" value={s.site.name} onChange={(e) => updateSettings({ site: { ...s.site, name: e.target.value } })} />
         </div>
         <div className="grid2">
@@ -62,20 +62,14 @@ export const SettingsDialog = forwardRef<HTMLDialogElement>(function SettingsDia
           field, open the Live tab over the launch site at home and zoom around: tiles you've seen are kept offline.
         </p>
 
-        <h2 style={{ fontSize: 14 }}>Simulator</h2>
-        <div className="grid2">
-          <label className="field"><span>Speed</span>
-            <select id="sim-speed" value={s.simSpeed} onChange={(e) => updateSettings({ simSpeed: Number(e.target.value) })}>
-              {[1, 2, 5, 10].map((v) => <option key={v} value={v}>{v}× real time</option>)}
-            </select>
-          </label>
-          <label className="field"><span>Wind (m/s)</span>
-            <input id="sim-wind" type="number" min={0} max={15} step={1} value={s.windMps} onChange={(e) => updateSettings({ windMps: num(e.target.value, s.windMps) })} />
+        <h2 style={{ fontSize: 14 }}>At the field</h2>
+        <div className="toggles">
+          <label className="toggle">
+            <input type="checkbox" id="set-keepAwake" checked={s.keepAwake} onChange={(e) => updateSettings({ keepAwake: e.target.checked })} />
+            <span>Keep the screen on while connected</span>
           </label>
         </div>
-        <label className="field"><span>Wind from (° compass, 270 = from the west)</span>
-          <input id="sim-wind-dir" type="number" min={0} max={359} step={10} value={s.windFromDeg} onChange={(e) => updateSettings({ windFromDeg: num(e.target.value, s.windFromDeg) % 360 })} />
-        </label>
+        <p className="small muted" style={{ margin: 0 }}>Liftoff, apogee, landing, signal lost and low battery pop up on screen. The app makes no sound.</p>
 
         <div className="row">
           <button type="button" className="btn small danger" onClick={forgetLastFix}>Forget saved rocket fix</button>

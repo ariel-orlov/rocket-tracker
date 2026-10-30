@@ -20,3 +20,30 @@ export function fmtAgo(ms: number): string {
   if (s < 3600) return `${Math.floor(s / 60)}m ${s % 60}s ago`;
   return `${Math.floor(s / 3600)}h ago`;
 }
+
+/** Vertical speed: ft/s or m/s, with a sign. */
+export function fmtVs(mps: number | null, units: "ft" | "m"): string {
+  if (mps === null || !Number.isFinite(mps)) return "—";
+  const v = units === "ft" ? mps * M_TO_FT : mps;
+  return `${v > 0 ? "+" : ""}${v.toFixed(Math.abs(v) < 10 ? 1 : 0)} ${units}/s`;
+}
+
+/** 75 → "1:15" */
+export function fmtDuration(s: number | null): string {
+  if (s === null || !Number.isFinite(s)) return "—";
+  const r = Math.round(s);
+  return `${Math.floor(r / 60)}:${String(r % 60).padStart(2, "0")}`;
+}
+
+export function fmtClock(t: number): string {
+  return new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+}
+
+/** "turn right 35°", "straight ahead", "turn around" */
+export function turnText(bearing: number, heading: number): string {
+  const rel = ((bearing - heading + 540) % 360) - 180;
+  const a = Math.abs(Math.round(rel));
+  if (a <= 10) return "straight ahead";
+  if (a >= 160) return "behind you";
+  return `turn ${rel > 0 ? "right" : "left"} ${a}°`;
+}

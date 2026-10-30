@@ -2,19 +2,30 @@
 
 A GPS tracker for rocket launches, and the web app that shows it live.
 
-**App:** https://ariel-orlov.github.io/rocket-tracker/ (Chrome or Edge on a computer)
+**App:** https://ariel-orlov.github.io/rocket-tracker/ (Chrome or Edge on a computer; Chrome on Android over Bluetooth)
 
-- **Live**: the rocket on a satellite map, its flight path, flight state (pad / flight / landed),
-  altitude, and the distance and compass bearing to walk from you to the rocket.
-- **Terminal**: everything the board prints over USB, with filtering and a log download.
-- **Flash**: load the firmware onto a board straight from the browser. No Arduino IDE needed.
-- **Code**: the firmware source, plus the packet format and radio settings.
-- **Simulate flight**: a realistic 800 ft flight with wind drift, to try everything without hardware.
+- **Live**: the rocket on a satellite map with its flight path, pad distance rings, apogee and a predicted landing
+  circle while it comes down. The side panel reorders itself for the phase: pre-flight check on the pad, altitude and
+  vertical speed in the air, the walk to the rocket after landing.
+- **Launch type**: **Competition** mode is transmit-only and never listens to the radio, as competition rules
+  require. **Non-competition** mode listens for 400 ms after each packet, so the ground station can turn the buzzer on.
+  Set it over USB before the flight; it's saved on the board.
+- **Beep after landing**: an on/off switch for the rocket's own landing beeps. Works in competition mode, since
+  nothing is sent to the rocket.
+- **Buzzer**: "Buzz rocket" (non-competition launches only) from the app or the ground station's PRG button,
+  confirmed by the rocket's next packets. Over USB, a beep test works in either mode.
+- **Signal**: bars, link margin, RSSI, SNR, packet loss and a warmer/colder trend; the Signal tab adds history and a
+  range test (link margin against distance, with a CSV export).
+- **Walk to the rocket**: distance and bearing from the ground station's GPS (or the phone's), with a turn-by-turn arrow
+  from the phone compass or your walking direction.
+- **Alerts**: liftoff, apogee, landing, signal lost and low battery pop up on screen. Flight summary after landing.
+- **Terminal**, **Flash** and **Code** tabs: raw board output with a command box, browser flashing, and the firmware
+  source and protocol.
 
-The app talks to the boards with the browser's Web Serial API, so it needs Chrome or Edge on a
-desktop or laptop. Install it from the address bar ("Install app") to use it like a normal app.
-After the first visit it works offline, and map tiles you've already viewed are kept, so open
-the map over your launch site before you leave home.
+The app talks to the ground station over USB (Web Serial) or Bluetooth LE, and to the flight unit over USB. Install it
+from the address bar ("Install app") to use it like a normal app. After the first visit it works offline, and map
+tiles you've already viewed are kept, so open the map over your launch site before you leave home. Packets and the last
+fix are kept in the browser, so a refresh doesn't lose the flight.
 
 ## How the tracker works
 
@@ -23,10 +34,10 @@ L76K GPS ──serial──▶ XIAO ESP32S3 ──SPI──▶ Wio-SX1262 ──
           (in the rocket, transmit only)                                   (ground station, in your hand)
 ```
 
-The flight unit sends a 22-byte packet once a second and never receives anything, so nothing
-outside the rocket can control it after liftoff. The ground station receives each packet,
-compares it with its own GPS, and prints both over USB. The ground station's own screen shows
-distance and bearing too, so the laptop is never the only way to find the rocket.
+The flight unit sends a 23-byte packet once a second. In competition mode it never receives anything, so
+nothing outside the rocket can control it after liftoff. The ground station receives each packet,
+compares it with its own GPS, and sends both to the app over USB and Bluetooth. Its own screen
+shows distance and bearing too, so the phone or laptop is never the only way to find the rocket.
 
 ## Repository
 
@@ -52,4 +63,4 @@ Open http://localhost:5173. Web Serial works on `localhost` too.
 
 Nothing leaves your browser. The launch site you set and the last rocket position are stored
 only in your browser's local storage. The repo contains no keys, accounts or real locations;
-the simulator and tests use Great Meadow, VA as an example site.
+the tests and default map use Great Meadow, VA as an example site.

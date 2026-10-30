@@ -11,7 +11,7 @@
     "skipLibCheck": true,
     "noEmit": true,
     "isolatedModules": true,
-    "types": ["vite/client", "vite-plugin-pwa/client", "w3c-web-serial"]
+    "types": ["vite/client", "vite-plugin-pwa/client", "w3c-web-serial", "web-bluetooth"]
   },
   "include": ["src"]
 }

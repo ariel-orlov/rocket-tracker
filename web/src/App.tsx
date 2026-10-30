@@ -1,15 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { connectSerial, disconnectSerial, resetBoard, serialSupported } from "./lib/serial";
-import { startSim, stopSim } from "./lib/sim";
+import { resetBoard, serialSupported } from "./lib/serial";
+import { bleSupported } from "./lib/ble";
+import { connectBluetooth, connectUsb, disconnect } from "./lib/link";
 import { useApp } from "./lib/store";
 import { LiveView } from "./views/LiveView";
+import { SignalView } from "./views/SignalView";
 import { TerminalView } from "./views/TerminalView";
 import { FlashView } from "./views/FlashView";
 import { CodeView } from "./views/CodeView";
 import { SettingsDialog } from "./views/SettingsDialog";
+import { Toasts } from "./views/Toasts";
 
 const TABS = [
   { id: "live", label: "Live" },
+  { id: "signal", label: "Signal" },
   { id: "terminal", label: "Terminal" },
   { id: "flash", label: "Flash" },
   { id: "code", label: "Code" },
@@ -37,9 +41,10 @@ export function App() {
   }, []);
 
   const connLabel =
-    conn === "usb" ? "USB live" : conn === "sim" ? "Simulator" : conn === "connecting" ? "Connecting…" : conn === "error" ? "Error" : "Not connected";
-  const connDot = conn === "usb" || conn === "sim" ? "live" : conn === "connecting" ? "warn" : conn === "error" ? "bad" : "";
+    conn === "usb" ? "USB" : conn === "ble" ? "Bluetooth" : conn === "connecting" ? "Connecting…" : conn === "error" ? "Error" : "Not connected";
+  const connDot = conn === "usb" || conn === "ble" ? "on" : conn === "connecting" ? "warn" : conn === "error" ? "bad" : "";
   const deviceLabel = device === "flight" ? "Flight unit" : device === "ground" ? "Ground station" : null;
+  const linked = conn === "usb" || conn === "ble" || conn === "connecting";
 
   return (
     <div className="app">
@@ -68,20 +73,23 @@ export function App() {
                 Radio {radio === "ok" ? "OK" : "failed"}
               </span>
             )}
-            {conn === "usb" || conn === "connecting" ? (
+            {linked ? (
               <>
-                <button className="btn" onClick={() => void resetBoard()} disabled={conn !== "usb"} title="Restart the board to see its boot messages">
-                  Reset board
-                </button>
-                <button className="btn" onClick={() => void disconnectSerial()}>Disconnect</button>
+                {conn === "usb" && (
+                  <button className="btn" onClick={() => void resetBoard()} title="Restart the board to see its boot messages">
+                    Reset board
+                  </button>
+                )}
+                <button className="btn" onClick={() => void disconnect()}>Disconnect</button>
               </>
-            ) : conn === "sim" ? (
-              <button className="btn" onClick={stopSim}>Stop simulation</button>
             ) : (
               <>
-                <button className="btn" onClick={startSim}>Simulate flight</button>
-                <button className="btn primary" onClick={() => void connectSerial()} disabled={!serialSupported}>
-                  Connect USB
+                <span className="small muted connect-label">Connect:</span>
+                <button className="btn primary" onClick={() => void connectUsb()} disabled={!serialSupported} title="Ground station or flight unit on a USB-C data cable">
+                  USB
+                </button>
+                <button className="btn primary" onClick={() => void connectBluetooth()} disabled={!bleSupported} title="Ground station over Bluetooth (no cable)">
+                  Bluetooth
                 </button>
               </>
             )}
@@ -93,10 +101,14 @@ export function App() {
             </button>
           </div>
         </header>
-        {!serialSupported && (
+        {!serialSupported && !bleSupported && (
           <div className="banner warn">
-            This browser can't talk to USB boards. Open this page in <strong>Chrome</strong> or <strong>Edge</strong> on a computer. The simulator and code still work here.
+            This browser can't talk to the boards. Use <strong>Chrome</strong> or <strong>Edge</strong> on a computer, or Chrome on Android
+            (Bluetooth). On iPhone, the free <strong>Bluefy</strong> browser supports Bluetooth.
           </div>
+        )}
+        {!serialSupported && bleSupported && (
+          <div className="banner warn">No USB here: connect the ground station over <strong>Bluetooth</strong>. USB needs Chrome or Edge on a computer.</div>
         )}
         {connError && <div className="banner">{connError}</div>}
         {radio === "failed" && <div className="banner">Radio failed to start: {radioMsg}. Don't fly until this says Radio OK.</div>}
@@ -106,11 +118,13 @@ export function App() {
         <div hidden={tab !== "live"} style={{ height: "100%" }}>
           <LiveView />
         </div>
+        {tab === "signal" && <SignalView />}
         {tab === "terminal" && <TerminalView />}
         {tab === "flash" && <FlashView />}
         {tab === "code" && <CodeView />}
       </main>
       <SettingsDialog ref={settingsRef} />
+      <Toasts />
     </div>
   );
 }

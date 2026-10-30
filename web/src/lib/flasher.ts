@@ -10,8 +10,8 @@ export interface Target {
 
 export const TARGETS: Target[] = [
   { id: "bench", name: "Flight unit: bench", board: "XIAO ESP32S3 + Wio-SX1262", note: "Transmits at 2 dBm. Use for desk tests." },
-  { id: "flight", name: "Flight unit: flight", board: "XIAO ESP32S3 + Wio-SX1262", note: "Transmits at 22 dBm. Use for range tests and launches." },
-  { id: "ground", name: "Ground station", board: "Heltec Wireless Tracker", note: "Receives packets, shows distance and bearing." },
+  { id: "flight", name: "Flight unit: flight", board: "XIAO ESP32S3 + Wio-SX1262", note: "Transmits at 22 dBm. Use for range tests and launches. Competition or non-competition mode is set from the Live tab." },
+  { id: "ground", name: "Ground station", board: "Heltec Wireless Tracker", note: "Receives packets, shows distance and bearing, Bluetooth to the app, sends buzz commands." },
 ];
 
 export interface FirmwareManifest {

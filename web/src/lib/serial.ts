@@ -1,5 +1,4 @@
-import { getState, ingestLine, logApp, setState } from "./store";
-import { simRunning, stopSim } from "./sim";
+import { getState, ingestLine, logApp, resetLinkState, setState } from "./store";
 
 export const serialSupported = typeof navigator !== "undefined" && "serial" in navigator;
 
@@ -8,6 +7,7 @@ let reader: ReadableStreamDefaultReader<string> | null = null;
 let pipeDone: Promise<void> | null = null;
 let wantConnected = false; // true while the user expects a live USB link
 let portInfo: SerialPortInfo | null = null;
+const encoder = new TextEncoder();
 
 async function open(p: SerialPort) {
   await p.open({ baudRate: 115200 });
@@ -15,6 +15,8 @@ async function open(p: SerialPort) {
   portInfo = p.getInfo();
   setState({ conn: "usb", connError: null });
   void readLoop(p);
+  // Firmware 3 answers with its info line (mode, version). Older firmware ignores it.
+  setTimeout(() => void writeSerial("INFO").catch(() => undefined), 1200);
 }
 
 async function readLoop(p: SerialPort) {
@@ -44,16 +46,17 @@ async function readLoop(p: SerialPort) {
   }
 }
 
-export async function connectSerial() {
+export async function connectSerial(beforeOpen?: () => Promise<void>) {
   if (!serialSupported) {
     setState({ conn: "error", connError: "This browser can't open USB serial ports. Use Chrome or Edge on a computer." });
     return;
   }
-  if (simRunning()) stopSim(); // real data and simulated data never mix
   try {
     setState({ conn: "connecting", connError: null });
     const p = await navigator.serial.requestPort();
+    await beforeOpen?.();
     wantConnected = true;
+    resetLinkState();
     await open(p);
     logApp("Connected over USB. Waiting for data…");
   } catch (e) {
@@ -73,7 +76,7 @@ function friendlyOpenError(msg: string) {
 export async function disconnectSerial() {
   wantConnected = false;
   await closePort();
-  if (getState().conn === "usb") setState({ conn: "idle" });
+  if (getState().conn === "usb" || getState().conn === "connecting") setState({ conn: "idle" });
   logApp("Disconnected.");
 }
 
@@ -94,6 +97,17 @@ async function closePort() {
     /* already closed */
   }
   port = null;
+}
+
+/** One command line to the board. */
+export async function writeSerial(line: string) {
+  if (!port?.writable) throw new Error("Not connected over USB.");
+  const w = port.writable.getWriter();
+  try {
+    await w.write(encoder.encode(line + "\n"));
+  } finally {
+    w.releaseLock();
+  }
 }
 
 /** Same reset the Arduino IDE does: pulse RTS. The board drops off USB and comes back. */
