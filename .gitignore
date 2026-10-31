@@ -6,3 +6,7 @@ web/public/firmware/
 .DS_Store
 *.log
 PLAN.md
+desktop/node_modules/
+desktop/out/
+desktop/app/
+desktop/build/icon.icns

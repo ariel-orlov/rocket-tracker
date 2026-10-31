@@ -27,6 +27,12 @@ from the address bar ("Install app") to use it like a normal app. After the firs
 tiles you've already viewed are kept, so open the map over your launch site before you leave home. Packets and the last
 fix are kept in the browser, so a refresh doesn't lose the flight.
 
+## Mac app
+
+`desktop/` wraps the same app as a normal Mac app ("Rocket Tracker" in Applications, its own window and Dock
+icon). Everything is bundled, so it runs with no internet except for new map tiles, and USB and Bluetooth work the
+same as in Chrome. Build and install it with `cd desktop && ./build.sh --install` (see [desktop/README.md](desktop/README.md)).
+
 ## How the tracker works
 
 ```
@@ -48,6 +54,7 @@ shows distance and bearing too, so the phone or laptop is never the only way to 
 | `firmware/flash.sh` | Build/flash/monitor from the command line instead of the app |
 | `scripts/build-firmware.sh` | Builds all three firmware images for the app's Flash tab |
 | `web/` | The app (Vite + React + TypeScript, Leaflet, esptool-js) |
+| `desktop/` | The Mac app: Electron around the built `web/` app |
 | `.github/workflows/deploy.yml` | On every push: build firmware, test, build the app, publish to GitHub Pages |
 
 ## Run it locally
